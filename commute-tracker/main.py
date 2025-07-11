@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import os
 import pytz
 import requests
-import time
 import logging
 from datetime import datetime
 from google.cloud import bigquery
@@ -11,11 +10,13 @@ from google.cloud import bigquery
 # Transit API configuration
 API_TOKEN = os.getenv("TRANSIT_API_TOKEN")
 API_URL = "https://api.transitapp.com/v3"
-ESTIMATE_DURATION_ENDPOINT = f"{API_URL}/public/estimate_plan_duration"
+ESTIMATE_DURATION_ENDPOINT = f"{API_URL}/public/plan"
 
 # Location coordinates and timezone
+LOCATION1_NAME = os.getenv("LOCATION1_NAME", "Location_1")
 LOCATION1_LAT = os.getenv("LOCATION1_LAT")
 LOCATION1_LON = os.getenv("LOCATION1_LON")
+LOCATION2_NAME = os.getenv("LOCATION2_NAME", "Location_2")
 LOCATION2_LAT = os.getenv("LOCATION2_LAT")
 LOCATION2_LON = os.getenv("LOCATION2_LON")
 TZ = os.getenv("TZ", "America/Toronto")
@@ -41,6 +42,7 @@ class Trip:
     departure_time: float
     duration: float = None
     transport_type: str = None
+    _raw_trip_data: dict = None
 
     def set_trip_duration(self) -> None:
         url = ESTIMATE_DURATION_ENDPOINT
@@ -52,8 +54,7 @@ class Trip:
             "from_lon": self.from_lon,
             "to_lat": self.to_lat,
             "to_lon": self.to_lon,
-            "leave_time": int(self.departure_time.timestamp()),
-            "mode": "transit"
+            "num_result": 1,
         }
 
         response = requests.get(url, headers=headers, params=params)
@@ -61,10 +62,15 @@ class Trip:
             logger.error(f"Error: {response.status_code} - {response.text}")
             return None
 
-        data = response.json()
+        self._raw_trip_data = response.json()["results"][0]
 
-        self.duration = data.get("duration")
-        self.transport_type = data.get("type")
+        self.duration = self._raw_trip_data.get("duration")
+        self.transport_type = self._raw_trip_data.get("type")
+    
+    def __str__(self):
+        return (f"Trip from ({self.from_lat}, {self.from_lon}) to "
+                f"({self.to_lat}, {self.to_lon}) will have a duration of {self.duration} "
+                f"seconds and transport type '{self.transport_type}'")
 
 
 def store_duration(direction, duration, departure_time):
@@ -103,7 +109,7 @@ def main():
     trip1.set_trip_duration()
 
     if trip1.duration:
-        store_duration("location1_to_location2", trip1.duration, now)
+        store_duration(f"{LOCATION1_NAME}_to_{LOCATION2_NAME}", trip1.duration, now)
 
     # LOCATION2 ➜ LOCATION1
     trip2 = Trip(
@@ -115,9 +121,12 @@ def main():
     )
 
     trip2.set_trip_duration()
+
+    logger.info(trip1)
+    logger.info(trip2)
     
     if trip2.duration:
-        store_duration("location2_to_location1", trip2.duration, now)
+        store_duration(f"{LOCATION2_NAME}_to_{LOCATION1_NAME}", trip2.duration, now)
 
 
 if __name__ == "__main__":
