@@ -1,0 +1,47 @@
+name: Deploy Cloud Run Job
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  JOB_NAME: commute-tracker
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Authenticate using a service account key stored in GitHub Secrets
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Set up gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Build and push container to GCR
+        run: |
+          gcloud builds submit --tag gcr.io/${PROJECT_ID}/${JOB_NAME}
+
+      - name: Deploy/update Cloud Run Job
+        run: |
+          gcloud run jobs update ${JOB_NAME} \
+            --region ${REGION} \
+            --image gcr.io/${PROJECT_ID}/${JOB_NAME} \
+            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},TIMEZONE=${{ secrets.TIMEZONE }}" \
+            --max-retries 1 || \
+          gcloud run jobs create ${JOB_NAME} \
+            --region ${REGION} \
+            --image gcr.io/${PROJECT_ID}/${JOB_NAME} \
+            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},TIMEZONE=${{ secrets.TIMEZONE }}" \
+            --max-retries 1
