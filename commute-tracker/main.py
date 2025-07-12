@@ -67,6 +67,7 @@ class Trip:
 
         self.duration = self._raw_trip_data.get("duration")
         self.start_time = self._raw_trip_data.get("start_time")
+        self.end_time = self._raw_trip_data.get("end_time")
         self.transport_type = self._raw_trip_data.get("type")
     
     def __str__(self):
@@ -75,14 +76,14 @@ class Trip:
                 f"seconds and transport type '{self.transport_type}'")
 
 
-def store_duration(direction: str, duration: float, start_time: float, end_time: float, current_time: float):
+def store_duration(direction: str, duration: float, start_time: float, end_time: float, current_time: float) -> None:
     table = BQ_TABLE
     row = {
         "direction_name": direction,
         "duration_sec": duration,
         "start_time": start_time,
         "end_time": end_time,
-        "fetched_at": current_time,
+        "tmsp": current_time,
     }
     client.insert_rows_json(table, [row])
 
@@ -106,17 +107,18 @@ def main():
         from_lon=float(LOCATION1_LON),
         to_lat=float(LOCATION2_LAT),
         to_lon=float(LOCATION2_LON),
-        departure_time=now
     )
 
     trip1.set_trip_duration()
 
     if trip1.duration:
+        logger.info(trip1)
         store_duration(
             direction=f"{LOCATION1_NAME}_to_{LOCATION2_NAME}",
             duration=trip1.duration,
-            end_time=now,
-            current_time=now
+            start_time=trip1.start_time,
+            end_time=trip1.end_time,
+            current_time=now,
         )
 
     # LOCATION2 ➜ LOCATION1
@@ -125,16 +127,19 @@ def main():
         from_lon=float(LOCATION2_LON),
         to_lat=float(LOCATION1_LAT),
         to_lon=float(LOCATION1_LON),
-        departure_time=now
     )
 
     trip2.set_trip_duration()
 
-    logger.info(trip1)
-    logger.info(trip2)
-    
     if trip2.duration:
-        store_duration(f"{LOCATION2_NAME}_to_{LOCATION1_NAME}", trip2.duration, now)
+        logger.info(trip2)
+        store_duration(
+            direction=f"{LOCATION2_NAME}_to_{LOCATION1_NAME}",
+            duration=trip2.duration,
+            start_time=trip2.start_time,
+            end_time=trip2.end_time,
+            current_time=now
+        )
 
 
 if __name__ == "__main__":
