@@ -88,7 +88,11 @@ def store_duration(direction: str, duration: float, start_time: float, end_time:
         "end_time": end_time,
         "tmsp": current_time,
     }
-    client.insert_rows_json(table, [row])
+    errors = client.insert_rows_json(table, [row])
+    if errors:
+        logger.error(f"BigQuery insert errors: {errors}")
+    else:
+        logger.info("Row inserted successfully.")
 
 
 def get_current_time() -> float:
