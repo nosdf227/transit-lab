@@ -39,13 +39,24 @@ class Trip:
     from_lon: float
     to_lat: float
     to_lon: float
-    start_time: float
-    end_time: float
+    start_time: float = None
+    end_time: float = None
     duration: float = None
-    transport_type: str = None
     _raw_trip_data: dict = None
 
-    def set_trip_duration(self) -> None:
+    def parse_raw_trip_data(self) -> None:
+        if not self._raw_trip_data:
+            logger.error("No raw trip data available to parse.")
+            return
+
+        self.duration = self._raw_trip_data.get("duration")
+        self.start_time = self._raw_trip_data.get("start_time")
+        self.end_time = self._raw_trip_data.get("end_time")
+
+        logger.info(f"Parsed trip data: duration={self.duration}, "
+                    f"start_time={self.start_time}, end_time={self.end_time}")
+
+    def get_raw_trip_data(self) -> None:
         url = ESTIMATE_DURATION_ENDPOINT
         headers = {
             "Authorization": f"Bearer {API_TOKEN}"
@@ -64,16 +75,11 @@ class Trip:
             return None
 
         self._raw_trip_data = response.json()["results"][0]
-
-        self.duration = self._raw_trip_data.get("duration")
-        self.start_time = self._raw_trip_data.get("start_time")
-        self.end_time = self._raw_trip_data.get("end_time")
-        self.transport_type = self._raw_trip_data.get("type")
     
     def __str__(self):
         return (f"Trip from ({self.from_lat}, {self.from_lon}) to "
                 f"({self.to_lat}, {self.to_lon}) will have a duration of {self.duration} "
-                f"seconds and transport type '{self.transport_type}'")
+                f"seconds")
 
 
 def store_duration(direction: str, duration: float, start_time: float, end_time: float, current_time: float) -> None:
@@ -109,7 +115,8 @@ def main():
         to_lon=float(LOCATION2_LON),
     )
 
-    trip1.set_trip_duration()
+    trip1.get_raw_trip_data()
+    trip1.parse_raw_trip_data()
 
     if trip1.duration:
         logger.info(trip1)
@@ -129,7 +136,8 @@ def main():
         to_lon=float(LOCATION1_LON),
     )
 
-    trip2.set_trip_duration()
+    trip2.get_raw_trip_data()
+    trip2.parse_raw_trip_data()
 
     if trip2.duration:
         logger.info(trip2)
