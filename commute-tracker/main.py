@@ -82,7 +82,7 @@ class Trip:
 def store_duration(direction: str, duration: float, start_time: float, end_time: float, current_time: float) -> None:
     table = BQ_TABLE
     row = {
-        "direction_name": direction,
+        "direction": direction,
         "duration_sec": duration,
         "start_time": start_time,
         "end_time": end_time,
