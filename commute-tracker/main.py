@@ -53,9 +53,6 @@ class Trip:
         self.start_time = self._raw_trip_data.get("start_time")
         self.end_time = self._raw_trip_data.get("end_time")
 
-        logger.info(f"Parsed trip data: duration={self.duration}, "
-                    f"start_time={self.start_time}, end_time={self.end_time}")
-
     def get_raw_trip_data(self) -> None:
         url = ESTIMATE_DURATION_ENDPOINT
         headers = {

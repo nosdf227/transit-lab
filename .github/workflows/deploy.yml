@@ -38,10 +38,10 @@ jobs:
           gcloud run jobs update ${JOB_NAME} \
             --region ${REGION} \
             --image gcr.io/${PROJECT_ID}/${JOB_NAME} \
-            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},LOCATION1_NAME=${{ secrets.LOCATION1_NAME }},LOCATION2_NAME=${{ secrets.LOCATION2_NAME }},TIMEZONE=${{ secrets.TIMEZONE }}" \
+            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},LOCATION1_NAME=${{ secrets.LOCATION1_NAME }},LOCATION2_NAME=${{ secrets.LOCATION2_NAME }},TIMEZONE=${{ secrets.TIMEZONE }},PROJECT_ID=${{ secrets.PROJECT_ID }}" \
             --max-retries 1 || \
           gcloud run jobs create ${JOB_NAME} \
             --region ${REGION} \
             --image gcr.io/${PROJECT_ID}/${JOB_NAME} \
-            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},LOCATION1_NAME=${{ secrets.LOCATION1_NAME }},LOCATION2_NAME=${{ secrets.LOCATION2_NAME }},TIMEZONE=${{ secrets.TIMEZONE }}" \
+            --set-env-vars "API_TOKEN=${{ secrets.API_TOKEN }},LOCATION1_LAT=${{ secrets.LOCATION1_LAT }},LOCATION1_LON=${{ secrets.LOCATION1_LON }},LOCATION2_LAT=${{ secrets.LOCATION2_LAT }},LOCATION2_LON=${{ secrets.LOCATION2_LON }},LOCATION1_NAME=${{ secrets.LOCATION1_NAME }},LOCATION2_NAME=${{ secrets.LOCATION2_NAME }},TIMEZONE=${{ secrets.TIMEZONE }},PROJECT_ID=${{ secrets.PROJECT_ID }}" \
             --max-retries 1
