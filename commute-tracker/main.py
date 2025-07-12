@@ -39,7 +39,8 @@ class Trip:
     from_lon: float
     to_lat: float
     to_lon: float
-    departure_time: float
+    start_time: float
+    end_time: float
     duration: float = None
     transport_type: str = None
     _raw_trip_data: dict = None
@@ -65,6 +66,7 @@ class Trip:
         self._raw_trip_data = response.json()["results"][0]
 
         self.duration = self._raw_trip_data.get("duration")
+        self.start_time = self._raw_trip_data.get("start_time")
         self.transport_type = self._raw_trip_data.get("type")
     
     def __str__(self):
@@ -73,13 +75,14 @@ class Trip:
                 f"seconds and transport type '{self.transport_type}'")
 
 
-def store_duration(direction, duration, departure_time):
+def store_duration(direction: str, duration: float, start_time: float, end_time: float, current_time: float):
     table = BQ_TABLE
     row = {
-        "direction": direction,
+        "direction_name": direction,
         "duration_sec": duration,
-        "leave_time": departure_time.isoformat(),
-        "fetched_at": get_current_time(),
+        "start_time": start_time,
+        "end_time": end_time,
+        "fetched_at": current_time,
     }
     client.insert_rows_json(table, [row])
 
@@ -109,7 +112,12 @@ def main():
     trip1.set_trip_duration()
 
     if trip1.duration:
-        store_duration(f"{LOCATION1_NAME}_to_{LOCATION2_NAME}", trip1.duration, now)
+        store_duration(
+            direction=f"{LOCATION1_NAME}_to_{LOCATION2_NAME}",
+            duration=trip1.duration,
+            end_time=now,
+            current_time=now
+        )
 
     # LOCATION2 ➜ LOCATION1
     trip2 = Trip(
